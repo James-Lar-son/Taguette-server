@@ -1,0 +1,30 @@
+# Fallback build - only needed if Render cannot pull the official image
+# from quay.io.
+#
+# To use it: rename "Dockerfile" to "Dockerfile.quay", rename this file
+# to "Dockerfile", and commit. Render redeploys on its own.
+#
+# This reproduces what the official image does - installs Taguette from
+# PyPI and Calibre from Debian - but builds it here instead of pulling
+# it. Expect roughly ten minutes for the first build; later builds reuse
+# the cached layers.
+
+FROM python:3.12
+
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        calibre \
+        wv \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir --disable-pip-version-check "taguette==1.5.2"
+
+COPY config.py /etc/taguette/config.py
+
+# Taguette writes scratch files under HOME; point it at the disk.
+ENV HOME=/data
+
+EXPOSE 7465
+
+ENTRYPOINT ["taguette", "--no-browser", "--bind=0.0.0.0"]
+CMD ["server", "/etc/taguette/config.py"]

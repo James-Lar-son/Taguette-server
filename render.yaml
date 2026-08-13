@@ -1,0 +1,47 @@
+# Render Blueprint.
+#
+# When you point Render at this repository it reads this file and builds
+# the whole service - instance size, persistent disk, environment
+# variables - without you filling in a single form.
+#
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: larson-taguette
+    runtime: docker
+    plan: starter          # $7/month. "free" has no persistent disk.
+    region: oregon         # change to frankfurt / singapore / ohio if closer
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true       # redeploy automatically when you push to main
+
+    # Your database lives here. It survives restarts, redeploys and
+    # instance-size changes. 1 GB holds a very large amount of text and
+    # can be grown later without data loss.
+    disk:
+      name: taguette-data
+      mountPath: /data
+      sizeGB: 1
+
+    envVars:
+      # Render generates a strong random value on first deploy and keeps
+      # it from then on. It is never stored in this repository.
+      - key: SECRET_KEY
+        generateValue: true
+
+      # Shown in the browser tab and page header.
+      - key: TAGUETTE_NAME
+        value: Larson Qualitative Coding
+
+      # Only used as the From address if you ever attach a mail server.
+      - key: TAGUETTE_EMAIL
+        value: Taguette <taguette@larsongrowth.com>
+
+      # Keeps the sign-up page closed. Flip to "true", redeploy, add your
+      # collaborator, then flip it back.
+      - key: REGISTRATION_ENABLED
+        value: "false"
+
+      # Seconds allowed for importing or exporting a document.
+      - key: CONVERT_TIMEOUT
+        value: "480"
