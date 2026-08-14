@@ -42,6 +42,38 @@ Common knobs:
 - `CONVERT_TIMEOUT` — seconds allowed for a document import
 - `plan` — bump to `standard` if a large PDF import runs out of memory
 
+## Shell access
+
+Easiest: the **Shell** tab on the service page in the Render dashboard.
+No keys, no setup.
+
+From your own terminal, add your public key at **Account Settings → SSH
+Public Keys** in Render, then define a host alias in `~/.ssh/config`:
+
+```
+Host render-taguette
+    HostName ssh.oregon.render.com
+    User srv-XXXXXXXXXXXX
+    IdentityFile ~/.ssh/render_ed25519
+    IdentitiesOnly yes
+```
+
+Then `ssh render-taguette` connects, and `ssh render-taguette 'ls /data'`
+runs a single command — which is also how to let an agent operate the
+server without any SSH plugin.
+
+Note that only `/data` persists. Anything you install or edit over SSH
+disappears on the next deploy; durable changes belong in this repo.
+
+### Why the Dockerfile moves `HOME`
+
+The official image sets `HOME=/data`, which is where our persistent disk
+mounts. Render's SSH docs state: *"If your service uses a persistent
+disk, you must not mount it to the `$HOME` directory of the running
+user."* So the Dockerfile sets `HOME=/root` and creates `/root/.ssh` at
+mode 0700. No application data moves — `config.py` sets `DATABASE` to an
+explicit path on `/data`.
+
 ## Backups
 
 The persistent disk is durable but is not a backup. Once a month, open
