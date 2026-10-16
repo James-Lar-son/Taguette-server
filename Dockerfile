@@ -24,6 +24,15 @@ RUN mkdir -p /root/.ssh && chmod 0700 /root/.ssh
 
 COPY config.py /etc/taguette/config.py
 
+# --- Knowledge-graph integration patch -------------------------------
+# Adds a "Knowledge Graph" nav link (the public graph viewer) to the top
+# bar by replacing Taguette's base template with the patched copy in
+# patches/. The patch is upstream base.html (v1.5.2) plus one nav item.
+# If a future upstream release changes base.html materially, refresh
+# the patch from the new template rather than editing it blind.
+COPY patches/base.html /tmp/kg-base.html
+RUN python3 -c "import pathlib, shutil, taguette; shutil.copy('/tmp/kg-base.html', pathlib.Path(taguette.__file__).parent / 'templates' / 'base.html')"
+
 # The base image already sets:
 #     ENTRYPOINT ["taguette", "--no-browser", "--bind=0.0.0.0"]
 # so this line only appends the subcommand and the config path.
